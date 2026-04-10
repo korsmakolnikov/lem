@@ -21,7 +21,11 @@ help:
 	@echo "  make clean     -> remove virtualenv"
 
 # Full setup
-install: check-distro system venv deps
+install:
+	@$(MAKE) check-distro
+	@$(MAKE) system
+	@$(MAKE) venv
+	@$(MAKE) deps
 
 # Detect supported distro
 check-distro:

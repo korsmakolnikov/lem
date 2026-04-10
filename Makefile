@@ -49,12 +49,30 @@ system:
 
 # Create virtualenv (only if not exists)
 venv:
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "Creating virtualenv..."; \
-		$(PYTHON) -m venv $(VENV); \
-	else \
-		echo "Virtualenv already exists"; \
+	@echo "Creating virtualenv..."
+	@if ! command -v python3 >/dev/null 2>&1; then \
+		echo "ERROR: python3 not found"; \
+		exit 1; \
 	fi
+
+	@python3 -m venv $(VENV) || { \
+		echo "ERROR: Failed to create virtualenv. Trying to fix..."; \
+		if [ -f /etc/debian_version ]; then \
+			echo "Installing python3-venv..."; \
+			sudo apt install -y python3-venv; \
+		elif [ -f /etc/arch-release ]; then \
+			echo "Arch usually has venv included"; \
+		fi; \
+		echo "Retrying..."; \
+		python3 -m venv $(VENV); \
+	}
+
+	@if [ ! -d "$(VENV)" ]; then \
+		echo "ERROR: venv creation failed"; \
+		exit 1; \
+	fi
+
+	@echo "Virtualenv created successfully"
 
 # Install dependencies
 deps:

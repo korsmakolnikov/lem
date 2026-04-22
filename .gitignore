@@ -1,2 +1,6 @@
 .venv
 .tool-versions
+.ipynb_checkpoints/
+data/
+.env
+*.ipynb

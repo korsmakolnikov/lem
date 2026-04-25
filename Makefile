@@ -25,6 +25,7 @@ install:
 	@$(MAKE) check-distro
 	@$(MAKE) system
 	@$(MAKE) venv
+	@$(MAKE) env-file
 	@$(MAKE) deps
 
 # Detect supported distro
@@ -86,6 +87,13 @@ deps:
 		$(PIP) install -r requirements.txt; \
 	else \
 		$(PIP) install pyright black ruff jupyterlab pandas requests python-dotenv jupytext matplotlib; \
+	fi
+
+# Copy the env file
+env-file:
+	@if [ ! -f .env ]; then \
+		echo "Copying the env placeholder: please fill the fields..."; \ 
+	 	cp -n .env.dist .env; \
 	fi
 
 # Freeze dependencies

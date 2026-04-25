@@ -85,7 +85,7 @@ deps:
 	@if [ -f requirements.txt ]; then \
 		$(PIP) install -r requirements.txt; \
 	else \
-		$(PIP) install jupyterlab pandas requests python-dotenv jupytext matplotlib; \
+		$(PIP) install pyright black ruff jupyterlab pandas requests python-dotenv jupytext matplotlib; \
 	fi
 
 # Freeze dependencies

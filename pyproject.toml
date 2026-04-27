@@ -5,8 +5,6 @@ description = "Monte Carlo simulations for agile forecasting"
 authors = [{ name = "Federico" }]
 requires-python = ">=3.11"
 
----
-
 # 🧹 RUFF (lint + import + fix)
 [tool.ruff]
 line-length = 88
@@ -20,6 +18,7 @@ lint.select = [
     "B",   # bugbear (molto utile)
     "UP",  # pyupgrade
 ]
+src = ["."]
 
 lint.ignore = [
     "E501",  # gestito da black
@@ -28,28 +27,20 @@ lint.ignore = [
 # fix automatici
 fix = true
 
----
-
 # 🎯 RUFF FORMAT (opzionale, se vuoi sostituire black)
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-
----
 
 # ⚫ BLACK (formatter)
 [tool.black]
 line-length = 88
 target-version = ["py311"]
 
----
-
 # 🧠 PYRIGHT
 [tool.pyright]
 typeCheckingMode = "basic"
 pythonVersion = "3.11"
-
-# molto importante per progetti modulari
 venvPath = "."
 venv = ".venv"
 

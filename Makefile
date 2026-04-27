@@ -10,6 +10,8 @@ PY := $(VENV)/bin/python
 
 .PHONY: help install system check-distro venv deps run freeze clean
 
+.DEFAULT_GOAL := run
+
 help:
 	@echo "Targets:"
 	@echo "  make install   -> full setup (python + venv + deps)"

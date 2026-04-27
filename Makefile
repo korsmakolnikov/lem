@@ -30,6 +30,7 @@ install:
 	@$(MAKE) venv
 	@$(MAKE) env-file
 	@$(MAKE) deps
+	@$(MAKE) eol
 
 # Detect supported distro
 check-distro:
@@ -118,3 +119,5 @@ jupytext:
 	@echo "Converting .py files in notebooks/..."
 	@find notebooks -name "*.py" -exec $(JUPYTEXT) --to notebook {} \;
 
+eol:
+	@echo "End of line check..."

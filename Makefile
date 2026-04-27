@@ -96,7 +96,7 @@ deps:
 # Copy the env file
 env-file:
 	@if [ ! -f .env ]; then \
-		echo "Copying the env placeholder: please fill the fields..."; \ 
+		echo "Copying the env placeholder: please fill the fields..."; \
 	 	cp -n .env.dist .env; \
 	fi
 

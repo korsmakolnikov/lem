@@ -5,6 +5,12 @@ description = "Monte Carlo simulations for agile forecasting"
 authors = [{ name = "Federico" }]
 requires-python = ">=3.11"
 
+[tool.setuptools]
+package-dir = {"" = "src"} 
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 # 🧹 RUFF (lint + import + fix)
 [tool.ruff]
 line-length = 88

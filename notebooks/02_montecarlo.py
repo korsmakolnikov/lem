@@ -1,15 +1,21 @@
 # %%
 import json
 import random
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+from utils import config
+
+config = config.load_config()
 
 # %%
 # =========================
 # CARICAMENTO DATI
 # =========================
 
-with open("data/throughput.json", "r") as f:
+ACCESS_MODE = "r"
+
+with open("data/throughput.json", ACCESS_MODE) as f:
     data = json.load(f)
 
 historical = data["throughput"]
@@ -21,7 +27,12 @@ print("Historical throughput:", historical)
 # MODELLO MONTE CARLO
 # =========================
 
-def simulate_sprint(thresholds, n_simulations=10000, n_sprints=10):
+
+def simulate_sprint(
+    thresholds,
+    n_simulations=config.simulations.n_simulations,
+    n_sprints=config.simulations.default_sprints,
+):
     """
     Simula n_sprints futuri usando distribuzione empirica storica
     """
@@ -37,15 +48,13 @@ def simulate_sprint(thresholds, n_simulations=10000, n_sprints=10):
 
     return results
 
+
 # %%
 # =========================
 # SIMULAZIONE
 # =========================
 
-n_simulations = 10000
-n_sprints = 10  # orizzonte di pianificazione
-
-results = simulate_sprint(historical, n_simulations, n_sprints)
+results = simulate_sprint(thresholds=historical)
 
 results = np.array(results)
 
@@ -85,3 +94,4 @@ print("\n--- INTERPRETATION ---")
 print("P50: scenario realistico")
 print("P85: scenario conservativo")
 print("P95: worst-case planning buffer")
+

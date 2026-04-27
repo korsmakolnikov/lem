@@ -3,34 +3,32 @@
 # SETUP
 # =========================
 
-import os
 import json
-from datetime import datetime, timezone
+import os
 from collections import defaultdict
+from datetime import UTC, datetime
 
+import matplotlib.pyplot as plt
 import requests
 from dotenv import load_dotenv
+from utils.config import load_config
 
 # Carica .env (override per evitare problemi in Jupyter)
 load_dotenv(override=True)
 
-YOUTRACK_URL = os.getenv("YOUTRACK_URL")
-YOUTRACK_TOKEN = os.getenv("YOUTRACK_TOKEN")
-
-assert YOUTRACK_URL, "Missing YOUTRACK_URL"
-assert YOUTRACK_TOKEN, "Missing YOUTRACK_TOKEN"
-
-YOUTRACK_TOKEN = YOUTRACK_TOKEN.strip()
-
-headers = {
-    "Authorization": f"Bearer {YOUTRACK_TOKEN}",
-    "Accept": "application/json"
-}
 
 # %%
 # =========================
 # CONFIGURAZIONE
 # =========================
+
+
+config = load_config()
+
+headers = {
+    "Authorization": f"Bearer {config.youtrack.token}",
+    "Accept": "application/json",
+}
 
 SPRINT_PREFIX = "sprint-"
 FIELDS = "idReadable,tags(name),customFields(name,value)"
@@ -40,24 +38,19 @@ FIELDS = "idReadable,tags(name),customFields(name,value)"
 # FETCH PAGINATO
 # =========================
 
+
 def fetch_all_issues(base_url, headers, fields, query=None, batch_size=50):
     all_issues = []
     skip = 0
 
     while True:
-        params = {
-            "fields": fields,
-            "$top": batch_size,
-            "$skip": skip
-        }
+        params = {"fields": fields, "$top": batch_size, "$skip": skip}
 
         if query:
             params["query"] = query
 
         response = requests.get(
-            f"{base_url}/api/issues",
-            headers=headers,
-            params=params
+            f"{base_url}/api/issues", headers=headers, params=params
         )
 
         response.raise_for_status()
@@ -73,10 +66,12 @@ def fetch_all_issues(base_url, headers, fields, query=None, batch_size=50):
 
     return all_issues
 
+
 # %%
 # =========================
 # PARSING
 # =========================
+
 
 def get_sprint(issue):
     for tag in issue.get("tags", []):
@@ -92,10 +87,12 @@ def get_story_points(issue):
             return field.get("value")
     return None
 
+
 # %%
 # =========================
 # AGGREGAZIONE
 # =========================
+
 
 def build_throughput(issues):
     sprint_counts = defaultdict(int)
@@ -117,6 +114,7 @@ def sort_sprints(sprint_counts):
 
     return sorted_sprints, throughput
 
+
 # %%
 # =========================
 # PIPELINE
@@ -124,12 +122,7 @@ def sort_sprints(sprint_counts):
 
 print("Fetching issues from YouTrack...")
 
-issues = fetch_all_issues(
-    YOUTRACK_URL,
-    headers,
-    FIELDS,
-    query="tag: sprint-*"
-)
+issues = fetch_all_issues(config.youtrack.url, headers, FIELDS, query="tag: sprint-*")
 
 print(f"Total issues fetched: {len(issues)}")
 
@@ -155,9 +148,9 @@ assert all(x > 0 for x in throughput), "Invalid throughput values"
 os.makedirs("data", exist_ok=True)
 
 output = {
-    "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+    "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
     "throughput": throughput,
-    "sprints": sprints
+    "sprints": sprints,
 }
 
 with open("data/throughput.json", "w") as f:
@@ -169,8 +162,6 @@ print("Saved to data/throughput.json")
 # =========================
 # VISUAL CHECK (OPZIONALE)
 # =========================
-
-import matplotlib.pyplot as plt
 
 plt.plot(throughput, marker="o")
 plt.title("Throughput per sprint")

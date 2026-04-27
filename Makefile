@@ -91,6 +91,7 @@ deps:
 		$(PIP) install -r requirements.txt; \
 	else \
 		$(PIP) install pyright black ruff jupyterlab pandas requests python-dotenv jupytext matplotlib; \
+		$(PIP) install -e .; \
 	fi
 
 # Copy the env file

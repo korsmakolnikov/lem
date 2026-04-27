@@ -7,6 +7,7 @@ PYTHON := python3
 VENV := .venv
 PIP := $(VENV)/bin/pip
 PY := $(VENV)/bin/python
+JUPYTEXT := $(VENV)/bin/jupytext
 
 .PHONY: help install system check-distro venv deps run freeze clean
 
@@ -110,3 +111,10 @@ run:
 # Clean environment
 clean:
 	rm -rf $(VENV)
+
+jupytext:
+	@echo "Checking Jupytext..."
+	@command -v $(JUPYTEXT) >/dev/null 2>&1 || { echo "Jupytext not installed"; exit 1; }
+	@echo "Converting .py files in notebooks/..."
+	@find notebooks -name "*.py" -exec $(JUPYTEXT) --to notebook {} \;
+

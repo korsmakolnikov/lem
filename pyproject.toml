@@ -1,8 +1,8 @@
 [project]
-name = "monte-carlo-sim"
+name = "lem"
 version = "0.1.0"
 description = "Monte Carlo simulations for agile forecasting"
-authors = [{ name = "Federico" }]
+authors = [{ name = "Korsmakolnikov" }]
 requires-python = ">=3.11"
 
 [tool.setuptools]

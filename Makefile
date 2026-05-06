@@ -108,7 +108,7 @@ freeze:
 	$(PIP) freeze > requirements.txt
 
 # Run Jupyter Lab
-run:
+run: jupytext
 	@echo "Starting Jupyter Lab..."
 	$(PY) -m jupyter lab
 

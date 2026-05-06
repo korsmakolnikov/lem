@@ -90,7 +90,9 @@ deps:
 	@if [ -f requirements.txt ]; then \
 		$(PIP) install -r requirements.txt; \
 	else \
-		$(PIP) install pyright black ruff jupyterlab pandas requests python-dotenv jupytext matplotlib; \
+		$(PIP) install ipywidgets pyright black ruff jupyterlab jupytext; \
+		jupyter nbextension enable --py widgetsnbextension; \
+		$(PIP) install pandas requests python-dotenv matplotlib bokeh; \
 		$(PIP) install -e .; \
 	fi
 

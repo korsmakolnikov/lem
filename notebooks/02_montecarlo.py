@@ -1,31 +1,27 @@
 # %%
+# =========================
+# CONFIG
+# =========================
+
 import json
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
+from bokeh.io import output_notebook
+from bokeh.models.annotations.geometry import Span
+from bokeh.models.annotations.labels import Label
+from bokeh.plotting import figure, show
 from utils import config
 
+output_notebook()
+
 config = config.load_config()
-
-# %%
-# =========================
-# CARICAMENTO DATI
-# =========================
-
-ACCESS_MODE = "r"
-
-with open("data/throughput.json", ACCESS_MODE) as f:
+with open("data/throughput.json", "r") as f:
     data = json.load(f)
 
 historical = data["throughput"]
 
 print("Historical throughput:", historical)
-
-# %%
-# =========================
-# MODELLO MONTE CARLO
-# =========================
 
 
 def simulate_sprint(
@@ -39,11 +35,7 @@ def simulate_sprint(
     results = []
 
     for _ in range(n_simulations):
-        run = []
-
-        for _ in range(n_sprints):
-            run.append(random.choice(thresholds))
-
+        run = [random.choice(thresholds) for _ in range(n_sprints)]
         results.append(sum(run))
 
     return results
@@ -55,15 +47,9 @@ def simulate_sprint(
 # =========================
 
 results = simulate_sprint(thresholds=historical)
-
 results = np.array(results)
 
 print("Simulations:", len(results))
-
-# %%
-# =========================
-# STATISTICHE (DECISION MAKING)
-# =========================
 
 p50 = np.percentile(results, 50)
 p85 = np.percentile(results, 85)
@@ -74,24 +60,55 @@ print(f"P50 (median): {p50:.0f} items")
 print(f"P85: {p85:.0f} items")
 print(f"P95: {p95:.0f} items")
 
-# %%
-# =========================
-# DISTRIBUZIONE
-# =========================
+hist, edges = np.histogram(results, bins=30)
 
-plt.hist(results, bins=30)
-plt.title("Monte Carlo Forecast - Total Throughput (10 sprints)")
-plt.xlabel("Items completed")
-plt.ylabel("Frequency")
-plt.show()
+p = figure(
+    title="Monte Carlo Forecast - Total Throughput (10 sprints)",
+    x_axis_label="Items completed",
+    y_axis_label="Frequency",
+    width=800,
+    height=400,
+    tools="pan,wheel_zoom,box_zoom,reset,save",
+)
 
-# %%
-# =========================
-# INTERPRETAZIONE
-# =========================
+p.quad(
+    top=hist,
+    bottom=0,
+    left=edges[:-1],
+    right=edges[1:],
+    fill_color="steelblue",
+    line_color="white",
+    fill_alpha=0.8,
+)
+
+# Linee percentili
+for value, color, label_text in [
+    (p50, "blue", f"P50 ({p50:.0f})"),
+    (p85, "orange", f"P85 ({p85:.0f})"),
+    (p95, "red", f"P95 ({p95:.0f})"),
+]:
+    p.add_layout(
+        Span(
+            location=value,
+            dimension="height",
+            line_color=color,
+            line_width=2,
+            line_dash="dashed",
+        )
+    )
+    p.add_layout(
+        Label(
+            x=value + (edges[-1] - edges[0]) * 0.01,
+            y=max(hist) * 0.95,
+            text=label_text,
+            text_color=color,
+            text_font_size="11px",
+        )
+    )
+
+show(p)
 
 print("\n--- INTERPRETATION ---")
 print("P50: scenario realistico")
 print("P85: scenario conservativo")
 print("P95: worst-case planning buffer")
-

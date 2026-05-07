@@ -5,23 +5,13 @@
 
 import json
 import os
-from collections import defaultdict
 from datetime import UTC, datetime
 
-import matplotlib.pyplot as plt
-import requests
 from dotenv import load_dotenv
 from fetch.youtrack import YouTrackClient
 from utils.config import load_config
 
-# Carica .env (override per evitare problemi in Jupyter)
 load_dotenv(override=True)
-
-
-# %%
-# =========================
-# CONFIGURAZIONE
-# =========================
 
 config = load_config()
 client = YouTrackClient(config)
@@ -29,7 +19,7 @@ client = YouTrackClient(config)
 
 # %%
 # =========================
-# PIPELINE
+# FETCH
 # =========================
 
 print("Fetching issues from YouTrack...")
@@ -43,11 +33,6 @@ sprints, throughput_items = client.sort_sprints(items_data)
 
 print("Sprints:", sprints)
 print("Throughput:", throughput_items)
-
-# %%
-# =========================
-# VALIDAZIONE
-# =========================
 
 assert len(throughput_items) >= 3, "Too few sprints"
 assert all(x > 0 for x in throughput_items), "Invalid throughput values"
@@ -69,14 +54,3 @@ with open("data/throughput.json", "w") as f:
     json.dump(output, f, indent=2)
 
 print("Saved to data/throughput.json")
-
-# %%
-# =========================
-# VISUAL CHECK (OPZIONALE)
-# =========================
-
-plt.plot(throughput_items, marker="o")
-plt.title("Throughput per sprint")
-plt.xlabel("Sprint")
-plt.ylabel("Items completed")
-plt.show()

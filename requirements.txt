@@ -1,0 +1,6 @@
+bokeh>=3.4.0
+ipywidgets
+ipython
+pandas 
+requests 
+python-dotenv

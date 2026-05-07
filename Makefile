@@ -1,126 +1,147 @@
-# Makefile - Bootstrap ambiente Jupyter reproducible
-# Supporta:
-# - Ubuntu 24 (Debian-based)
-# - Garuda Linux (Arch-based)
+# =============================================================================
+# Makefile
+# supported distros: Arch Linux, Ubuntu 24
+# =============================================================================
 
-PYTHON := python3
-VENV := .venv
-PIP := $(VENV)/bin/pip
-PY := $(VENV)/bin/python
-JUPYTEXT := $(VENV)/bin/jupytext
+VENV_DIR  := .venv
+PYTHON    := python3
+PIP       := $(VENV_DIR)/bin/pip
+VENV_PY   := $(VENV_DIR)/bin/python
+REQ_FILE      := requirements.txt
+DEV_REQ_FILE  := requirements-dev.txt
+JUPYTEXT := $(VENV_DIR)/bin/jupytext
+JUPYTER_LABEXTENTION := $(VENV_DIR)/bin/jupyter
 
-.PHONY: help install system check-distro venv deps run freeze clean
+# detect the distro
+DISTRO := $(shell \
+	if [ -f /etc/arch-release ]; then echo arch; \
+	elif grep -qi ubuntu /etc/os-release 2>/dev/null; then echo ubuntu; \
+	else echo unknown; fi)
 
-.DEFAULT_GOAL := run
+.DEFAULT_GOAL := help
 
+# -----------------------------------------------------------------------------
+# help
+# -----------------------------------------------------------------------------
+.PHONY: help
 help:
-	@echo "Targets:"
-	@echo "  make install   -> full setup (python + venv + deps)"
-	@echo "  make system    -> install python (distro-based)"
-	@echo "  make venv      -> create virtualenv"
-	@echo "  make deps      -> install dependencies"
-	@echo "  make run       -> start jupyter lab"
-	@echo "  make freeze    -> update requirements.txt"
-	@echo "  make clean     -> remove virtualenv"
+	@echo ""
+	@echo "  Distro: $(DISTRO)"
+	@echo ""
+	@echo "  Targets available:"
+	@echo "    make install-system   Install system Python + pip"
+	@echo "    make venv             Create the virtual environment in $(VENV_DIR)/"
+	@echo "    make install          Install project dependencies in the venv"
+	@echo "    make install-dev      Install develpment dependencies (pyright, black, ruff)"
+	@echo "    make run              Run jupyter notebook server"
+	@echo "    make clean            Remove venv e output"
+	@echo "    make activate         Activate the virtual environment"
+	@echo "    make all              venv + install + run"
+	@echo ""
 
-# Full setup
-install:
-	@$(MAKE) check-distro
-	@$(MAKE) system
-	@$(MAKE) venv
-	@$(MAKE) env-file
-	@$(MAKE) deps
-	@$(MAKE) eol
+# -----------------------------------------------------------------------------
+# install-system  →  system dependencies (Python, pip, venv)
+# Arch:   pacman
+# Ubuntu: apt
+# -----------------------------------------------------------------------------
+.PHONY: install-system
+install-system:
+ifeq ($(DISTRO),arch)
+	@echo "[arch] Installing python + python-pip + python-virtualenv..."
+	sudo pacman -Sy --noconfirm python python-pip python-virtualenv
+else ifeq ($(DISTRO),ubuntu)
+	@echo "[ubuntu] Installing python3 + pip + venv..."
+	sudo apt-get update -qq
+	sudo apt-get install -y python3 python3-pip python3-venv python3-dev build-essential
+else
+	@echo "[warn] Distro unknown ($(DISTRO))."
+	@echo "       please install manually: python3, pip, venv"
+endif
 
-# Detect supported distro
-check-distro:
-	@echo "Checking supported distro..."
-	@if [ -f /etc/debian_version ]; then \
-		echo "Detected Debian/Ubuntu (OK)"; \
-	elif [ -f /etc/arch-release ]; then \
-		echo "Detected Arch/Garuda (OK)"; \
-	else \
-		echo "Unsupported distro. Only Ubuntu 24 and Garuda Linux are supported."; \
-		exit 1; \
-	fi
-
-# Install Python depending on distro
-system:
-	@echo "Installing Python..."
-	@if [ -f /etc/debian_version ]; then \
-		echo "Installing on Ubuntu/Debian..."; \
-		sudo apt update; \
-		sudo apt install -y python3 python3-venv python3-pip; \
-	elif [ -f /etc/arch-release ]; then \
-		echo "Installing on Arch/Garuda..."; \
-		sudo pacman -Sy --noconfirm python python-pip; \
-	fi
-
-# Create virtualenv (only if not exists)
+# -----------------------------------------------------------------------------
+# venv  →  create the virtual environment
+# -----------------------------------------------------------------------------
+.PHONY: venv
 venv:
-	@echo "Creating virtualenv..."
-	@if ! command -v python3 >/dev/null 2>&1; then \
-		echo "ERROR: python3 not found"; \
-		exit 1; \
-	fi
+	@echo "[venv] Creating virtual environment in $(VENV_DIR)/ ..."
+	$(PYTHON) -m venv $(VENV_DIR)
+	$(PIP) install --upgrade pip --quiet
+	@echo "[venv] Virtual environment ready ✓"
+	@echo "       activated with:  source $(VENV_DIR)/bin/activate"
 
-	@python3 -m venv $(VENV) || { \
-		echo "ERROR: Failed to create virtualenv. Trying to fix..."; \
-		if [ -f /etc/debian_version ]; then \
-			echo "Installing python3-venv..."; \
-			sudo apt install -y python3-venv; \
-		elif [ -f /etc/arch-release ]; then \
-			echo "Arch usually has venv included"; \
-		fi; \
-		echo "Retrying..."; \
-		python3 -m venv $(VENV); \
-	}
+# -----------------------------------------------------------------------------
+# install  →  project dependencies (dal requirements.txt)
+# -----------------------------------------------------------------------------
+.PHONY: install
+install: $(VENV_DIR)/bin/activate
+	@echo "[pip] installing deps $(REQ_FILE)..."
+	$(PIP) install -r $(REQ_FILE)
+	$(PIP) install -e .
+	@echo "[pip] deps installed ✓"
 
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "ERROR: venv creation failed"; \
-		exit 1; \
-	fi
+# -----------------------------------------------------------------------------
+# install-dev  →  develpment dependencies (pyright, black, ruff)
+# -----------------------------------------------------------------------------
+.PHONY: install-dev
+install-dev: $(VENV_DIR)/bin/activate
+	@echo "[pip] installing dev deps $(DEV_REQ_FILE)..."
+	$(PIP) install -r $(DEV_REQ_FILE)
+	@echo "[pip] dev deps installed ✓"
+	$(JUPYTER_LABEXTENTION) labextension enable widgetsnbextension
 
-	@echo "Virtualenv created successfully"
+$(VENV_DIR)/bin/activate:
+	@echo "[err] Virtual environment not found. please run: make venv"
+	@exit 1
 
-# Install dependencies
-deps:
-	@echo "Installing dependencies..."
-	$(PIP) install --upgrade pip
-	@if [ -f requirements.txt ]; then \
-		$(PIP) install -r requirements.txt; \
-	else \
-		$(PIP) install ipywidgets pyright black ruff jupyterlab jupytext; \
-		jupyter nbextension enable --py widgetsnbextension; \
-		$(PIP) install pandas requests python-dotenv matplotlib bokeh; \
-		$(PIP) install -e .; \
-	fi
-
-# Copy the env file
-env-file:
-	@if [ ! -f .env ]; then \
-		echo "Copying the env placeholder: please fill the fields..."; \
-	 	cp -n .env.dist .env; \
-	fi
-
-# Freeze dependencies
-freeze:
-	$(PIP) freeze > requirements.txt
-
-# Run Jupyter Lab
-run: jupytext
-	@echo "Starting Jupyter Lab..."
-	$(PY) -m jupyter lab
-
-# Clean environment
-clean:
-	rm -rf $(VENV)
-
+# -----------------------------------------------------------------------------
+# jupytext -> export py notebooks to jupyter notebooks format
+# -----------------------------------------------------------------------------
+.PHONY: jupytext
 jupytext:
 	@echo "Checking Jupytext..."
 	@command -v $(JUPYTEXT) >/dev/null 2>&1 || { echo "Jupytext not installed"; exit 1; }
 	@echo "Converting .py files in notebooks/..."
 	@find notebooks -name "*.py" -exec $(JUPYTEXT) --to notebook {} \;
 
-eol:
-	@echo "End of line check..."
+# -----------------------------------------------------------------------------
+# run  →  execute jupyter notebook server
+# -----------------------------------------------------------------------------
+.PHONY: run
+run: jupytext
+	# $(VENV_PY) main.py
+	@echo "Starting Jupyter Lab..."
+	$(VENV_PY) -m jupyter lab
+
+
+# ------------------------------------------------------------------------------
+# activate -> activate the virtual environment
+# ------------------------------------------------------------------------------
+.PHONY: activate
+activate:
+	source $(VENV_DIR)/bin/activate 
+
+
+# ------------------------------------------------------------------------------
+# env-file -> initialize the .env file
+# ------------------------------------------------------------------------------
+.PHONY: env-file
+env-file:
+	@if [ ! -f .env ]; then \
+		echo "Copying the env placeholder: please fill the fields..."; \
+	 	cp -n .env.dist .env; \
+	fi
+
+# -----------------------------------------------------------------------------
+# all  →  complete provisioning
+# -----------------------------------------------------------------------------
+.PHONY: all
+all: venv install install-dev run
+
+# -----------------------------------------------------------------------------
+# clean
+# -----------------------------------------------------------------------------
+.PHONY: clean
+clean:
+	@echo "[clean] removing $(VENV_DIR)/ and output/..."
+	rm -rf $(VENV_DIR)
+	@echo "[clean] done ✓"

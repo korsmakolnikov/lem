@@ -16,7 +16,7 @@ from utils import config
 output_notebook()
 
 config = config.load_config()
-with open("data/throughput.json", "r") as f:
+with open("data/throughput.json") as f:
     data = json.load(f)
 
 historical = data["throughput"]

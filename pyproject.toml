@@ -68,5 +68,6 @@ dev = [
     "jupyterlab>=4.5.7",
     "jupytext>=1.19.2",
     "pyright>=1.1.409",
+    "pytest>=9.0.3",
     "ruff>=0.15.12",
 ]

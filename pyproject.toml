@@ -4,6 +4,14 @@ version = "0.1.0"
 description = "Monte Carlo simulations for agile forecasting"
 authors = [{ name = "Korsmakolnikov" }]
 requires-python = ">=3.11"
+dependencies = [
+    "bokeh>=3.4.0",
+    "ipython>=9.13.0",
+    "ipywidgets>=8.1.8",
+    "pandas>=3.0.3",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.1",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"} 
@@ -24,11 +32,11 @@ lint.select = [
     "B",   # bugbear (molto utile)
     "UP",  # pyupgrade
 ]
-src = ["."]
 
 lint.ignore = [
     "E501",  # gestito da black
 ]
+src = ["."]
 
 # fix automatici
 fix = true
@@ -53,3 +61,12 @@ venv = ".venv"
 # qualità analisi
 reportMissingImports = true
 reportMissingTypeStubs = false
+
+[dependency-groups]
+dev = [
+    "black>=26.3.1",
+    "jupyterlab>=4.5.7",
+    "jupytext>=1.19.2",
+    "pyright>=1.1.409",
+    "ruff>=0.15.12",
+]

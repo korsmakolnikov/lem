@@ -1,6 +1,0 @@
-# requirements-dev.txt
-pyright
-black
-ruff
-jupyterlab 
-jupytext
